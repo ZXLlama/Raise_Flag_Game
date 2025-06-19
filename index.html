@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>抽獎指令</title>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #111;
+      color: #fff;
+      font-family: 'Noto Sans TC', Arial, sans-serif;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: stretch;
+      align-items: stretch;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+    }
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: stretch;
+      align-items: stretch;
+      height: 100%;
+    }
+    .half {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 4.5rem; 
+      font-weight: bold;
+      letter-spacing: 0.1em;
+      transition: color 0.3s, text-shadow 0.3s;
+      min-height: 40vh;
+      text-align: center;
+      will-change: transform, color, text-shadow;
+    }
+    .top {
+      border-bottom: 2px solid #222;
+      background: linear-gradient(to bottom, #222 80%, transparent 100%);
+    }
+    .bottom {
+      background: linear-gradient(to top, #222 80%, transparent 100%);
+    }
+    /* 動畫效果 */
+    .animate {
+      animation: pop 0.5s cubic-bezier(.68,-0.55,.27,1.55);
+    }
+    @keyframes pop {
+      0% { transform: scale(1) rotate(-2deg); text-shadow: 0 0 0 #fff; }
+      40% { transform: scale(1.2) rotate(2deg); text-shadow: 0 0 24px #fff8; }
+      60% { transform: scale(0.95) rotate(-1deg); text-shadow: 0 0 8px #fff4; }
+      100% { transform: scale(1) rotate(0deg); text-shadow: 0 0 0 #fff; }
+    }
+    /* 顏色強調 */
+    .red { color: #ff3b3b; text-shadow: 0 0 12px #ff3b3b88; }
+    .white { color: #fff; text-shadow: 0 0 12px #fff8; }
+    .black { 
+      color: #222; 
+      text-shadow: 0 0 12px #fff, 0 0 24px #fff8; /* 增加白色外光暈讓黑色字清楚 */
+      background: linear-gradient(to bottom, #444 60%, #111 100%);
+      padding: 0.2em 1em;
+      border-radius: 0.3em;
+    }
+    .cardboard { color: #c2a05a; text-shadow: 0 0 12px #c2a05a88; }
+  </style>
+</head>
+<body>
+  <div class="container" id="main">
+    <div class="half top" id="topText">點擊螢幕！</div>
+    <div class="half bottom" id="bottomText">沒有旗子的舉旗遊戲～</div>
+  </div>
+  <script>
+    const topOptions = [
+      { text: '紅色', class: 'red' },
+      { text: '白色', class: 'white' },
+      { text: '黑色', class: 'black' },
+      { text: '紙板', class: 'cardboard' }
+    ];
+    const bottomOptions = [
+      '舉起來', '放下來', '不要舉', '不要放'
+    ];
+
+    const topText = document.getElementById('topText');
+    const bottomText = document.getElementById('bottomText');
+
+    function roll() {
+      // 隨機選擇
+      const top = topOptions[Math.floor(Math.random() * topOptions.length)];
+      const bottom = bottomOptions[Math.floor(Math.random() * bottomOptions.length)];
+
+      // 移除舊 class
+      topText.classList.remove('red', 'white', 'black', 'cardboard', 'animate');
+      bottomText.classList.remove('animate');
+
+      // 設定新內容與 class
+      topText.textContent = top.text;
+      topText.classList.add(top.class, 'animate');
+      bottomText.textContent = bottom;
+      bottomText.classList.add('animate');
+    }
+
+    // 點擊任意處觸發（同時支援點擊與觸控）
+    document.getElementById('main').addEventListener('click', roll);
+    document.getElementById('main').addEventListener('touchend', function(e) {
+      e.preventDefault();
+      roll();
+    });
+
+    // 防止雙擊放大
+    document.body.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1) e.preventDefault();
+    }, { passive: false });
+
+    // 動畫結束後移除 animate class
+    topText.addEventListener('animationend', () => topText.classList.remove('animate'));
+    bottomText.addEventListener('animationend', () => bottomText.classList.remove('animate'));
+  </script>
+</body>
+</html>
