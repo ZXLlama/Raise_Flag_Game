@@ -39,7 +39,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 4.5rem; 
+      font-size: 4.2rem;
       font-weight: bold;
       letter-spacing: 0.1em;
       transition: color 0.3s, text-shadow 0.3s;
@@ -54,75 +54,101 @@
     .bottom {
       background: linear-gradient(to top, #222 80%, transparent 100%);
     }
-    /* 動畫效果 */
     .animate {
       animation: pop 0.5s cubic-bezier(.68,-0.55,.27,1.55);
     }
     @keyframes pop {
       0% { transform: scale(1) rotate(-2deg); text-shadow: 0 0 0 #fff; }
-      40% { transform: scale(1.2) rotate(2deg); text-shadow: 0 0 24px #fff8; }
-      60% { transform: scale(0.95) rotate(-1deg); text-shadow: 0 0 8px #fff4; }
+      40% { transform: scale(1.2) rotate(2deg); text-shadow: 0 0 32px #fff8; }
+      60% { transform: scale(0.95) rotate(-1deg); text-shadow: 0 0 12px #fff4; }
       100% { transform: scale(1) rotate(0deg); text-shadow: 0 0 0 #fff; }
     }
-    /* 顏色強調 */
-    .red { color: #ff3b3b; text-shadow: 0 0 12px #ff3b3b88; }
-    .white { color: #fff; text-shadow: 0 0 12px #fff8; }
-    .black { 
-      color: #222; 
-      text-shadow: 0 0 12px #fff, 0 0 24px #fff8; /* 增加白色外光暈讓黑色字清楚 */
-      background: linear-gradient(to bottom, #444 60%, #111 100%);
-      padding: 0.2em 1em;
-      border-radius: 0.3em;
+    .red { 
+      color: #ff3b3b; 
+      text-shadow: 0 0 32px #ff3b3bcc, 0 0 8px #fff8, 0 2px 2px #0008;
     }
-    .cardboard { color: #c2a05a; text-shadow: 0 0 12px #c2a05a88; }
+    .blue { 
+      color: #2196f3; 
+      text-shadow: 0 0 32px #2196f3cc, 0 0 8px #fff8, 0 2px 2px #0008;
+    }
+    .green { 
+      color: #4caf50; 
+      text-shadow: 0 0 32px #4caf50cc, 0 0 8px #fff8, 0 2px 2px #0008;
+    }
+    .orange { 
+      color: #ff9800; 
+      text-shadow: 0 0 32px #ff9800cc, 0 0 8px #fff8, 0 2px 2px #0008;
+    }
   </style>
 </head>
 <body>
   <div class="container" id="main">
-    <div class="half top" id="topText">點擊螢幕！</div>
-    <div class="half bottom" id="bottomText">沒有旗子的舉旗遊戲～</div>
+    <div class="half top" id="topText">點擊螢幕抽獎！</div>
+    <div class="half bottom" id="bottomText">請準備好～</div>
   </div>
   <script>
+    // 顏色與檔名對應
     const topOptions = [
-      { text: '紅色', class: 'red' },
-      { text: '白色', class: 'white' },
-      { text: '黑色', class: 'black' },
-      { text: '紙板', class: 'cardboard' }
+      { text: '紅色', class: 'red', audio: '紅色.mp3' },
+      { text: '藍色', class: 'blue', audio: '藍色.mp3' },
+      { text: '綠色', class: 'green', audio: '綠色.mp3' },
+      { text: '橘色', class: 'orange', audio: '橘色.mp3' }
     ];
+    // 動作與檔名對應
     const bottomOptions = [
-      '舉起來', '放下來', '不要舉', '不要放'
+      { text: '舉起來', audio: '舉起來.mp3' },
+      { text: '放下來', audio: '放下來.mp3' },
+      { text: '不要舉', audio: '不要舉.mp3' },
+      { text: '不要放', audio: '不要放.mp3' }
     ];
 
     const topText = document.getElementById('topText');
     const bottomText = document.getElementById('bottomText');
 
-    function roll() {
+    // 音效播放函式，確保每次都新建 Audio 物件避免快取問題
+    function playAudio(src) {
+      return new Promise((resolve) => {
+        const audio = new Audio(src);
+        audio.onended = () => resolve();
+        audio.onerror = () => resolve(); // 若找不到檔案也繼續
+        audio.play().catch(() => resolve());
+      });
+    }
+
+    let isRolling = false; // 防止連點
+
+    async function roll() {
+      if (isRolling) return;
+      isRolling = true;
+
       // 隨機選擇
       const top = topOptions[Math.floor(Math.random() * topOptions.length)];
       const bottom = bottomOptions[Math.floor(Math.random() * bottomOptions.length)];
 
       // 移除舊 class
-      topText.classList.remove('red', 'white', 'black', 'cardboard', 'animate');
+      topText.classList.remove('red', 'blue', 'green', 'orange', 'animate');
       bottomText.classList.remove('animate');
 
       // 設定新內容與 class
       topText.textContent = top.text;
       topText.classList.add(top.class, 'animate');
-      bottomText.textContent = bottom;
+      bottomText.textContent = bottom.text;
       bottomText.classList.add('animate');
+
+      // 播放顏色音效，播放完再播動作音效
+      await playAudio(top.audio);
+      await playAudio(bottom.audio);
+
+      isRolling = false;
     }
 
-    // 點擊任意處觸發（同時支援點擊與觸控）
-    document.getElementById('main').addEventListener('click', roll);
-    document.getElementById('main').addEventListener('touchend', function(e) {
+    // 點擊與觸控都支援
+    const main = document.getElementById('main');
+    main.addEventListener('click', roll);
+    main.addEventListener('touchend', function(e) {
       e.preventDefault();
       roll();
     });
-
-    // 防止雙擊放大
-    document.body.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 1) e.preventDefault();
-    }, { passive: false });
 
     // 動畫結束後移除 animate class
     topText.addEventListener('animationend', () => topText.classList.remove('animate'));
