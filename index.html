@@ -2,20 +2,21 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>抽獎指令</title>
   <style>
     html, body {
       height: 100%;
       margin: 0;
       padding: 0;
-      background: radial-gradient(ellipse at 50% 30%, #222 60%, #111 100%);
+      background: #111;
       color: #fff;
       font-family: 'Noto Sans TC', Arial, sans-serif;
       width: 100vw;
       height: 100vh;
       overflow: hidden;
       touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
     body {
       display: flex;
@@ -25,6 +26,8 @@
       height: 100vh;
       width: 100vw;
       user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
     .container {
       flex: 1;
@@ -33,23 +36,25 @@
       justify-content: stretch;
       align-items: stretch;
       height: 100%;
+      width: 100vw;
     }
     .half {
       flex: 1;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 4.5rem;
+      font-size: 6vw;
       font-weight: bold;
       letter-spacing: 0.12em;
-      transition: color 0.3s, text-shadow 0.3s, background 0.3s;
       min-height: 40vh;
       text-align: center;
-      will-change: transform, color, text-shadow, background;
       position: relative;
       z-index: 1;
-      /* 讓特效不會被裁切 */
       overflow: visible;
+      padding: 0 2vw;
+      box-sizing: border-box;
+      max-width: 100vw;
+      transition: background 0.2s;
     }
     .top {
       border-bottom: 2px solid #222;
@@ -58,67 +63,47 @@
     .bottom {
       background: linear-gradient(to top, #222 80%, transparent 100%);
     }
-    /* 動畫效果 */
-    .animate {
-      animation: pop 0.5s cubic-bezier(.68,-0.55,.27,1.55), glow 1.2s ease-in-out;
-    }
-    @keyframes pop {
-      0% { transform: scale(1) rotate(-2deg); text-shadow: 0 0 0 #fff; }
-      40% { transform: scale(1.25) rotate(2deg); text-shadow: 0 0 48px #fff8; }
-      60% { transform: scale(0.95) rotate(-1deg); text-shadow: 0 0 16px #fff4; }
-      100% { transform: scale(1) rotate(0deg); text-shadow: 0 0 0 #fff; }
-    }
-    @keyframes glow {
-      0% { filter: brightness(1) drop-shadow(0 0 0px #fff); }
-      50% { filter: brightness(1.2) drop-shadow(0 0 32px #fff8); }
-      100% { filter: brightness(1) drop-shadow(0 0 0px #fff); }
-    }
-    /* 彩色字特效加強 */
     .red { 
       color: #ff3b3b; 
-      text-shadow: 0 0 48px #ff3b3bcc, 0 0 16px #fff8, 0 2px 2px #0008;
-      background: linear-gradient(180deg, #ff3b3b44 0%, #fff0 100%);
+      text-shadow: 0 0 32px #ff3b3bcc, 0 0 8px #fff8;
+      background: linear-gradient(180deg, #ff3b3b22 0%, #fff0 100%);
       border-radius: 0.3em;
       padding: 0.1em 0.5em;
     }
     .blue { 
       color: #2196f3; 
-      text-shadow: 0 0 48px #2196f3cc, 0 0 16px #fff8, 0 2px 2px #0008;
-      background: linear-gradient(180deg, #2196f344 0%, #fff0 100%);
+      text-shadow: 0 0 32px #2196f3cc, 0 0 8px #fff8;
+      background: linear-gradient(180deg, #2196f322 0%, #fff0 100%);
       border-radius: 0.3em;
       padding: 0.1em 0.5em;
     }
     .green { 
       color: #4caf50; 
-      text-shadow: 0 0 48px #4caf50cc, 0 0 16px #fff8, 0 2px 2px #0008;
-      background: linear-gradient(180deg, #4caf5044 0%, #fff0 100%);
+      text-shadow: 0 0 32px #4caf50cc, 0 0 8px #fff8;
+      background: linear-gradient(180deg, #4caf5022 0%, #fff0 100%);
       border-radius: 0.3em;
       padding: 0.1em 0.5em;
     }
     .orange { 
       color: #ff9800; 
-      text-shadow: 0 0 48px #ff9800cc, 0 0 16px #fff8, 0 2px 2px #0008;
-      background: linear-gradient(180deg, #ff980044 0%, #fff0 100%);
+      text-shadow: 0 0 32px #ff9800cc, 0 0 8px #fff8;
+      background: linear-gradient(180deg, #ff980022 0%, #fff0 100%);
       border-radius: 0.3em;
       padding: 0.1em 0.5em;
     }
-    /* 增加閃爍特效 */
-    .sparkle::after {
-      content: '';
-      position: absolute;
-      left: 50%; top: 50%;
-      width: 120%; height: 120%;
-      pointer-events: none;
-      background: radial-gradient(circle, #fff8 0%, #fff0 80%);
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(0.7);
-      animation: sparkle 0.7s linear;
-      z-index: 2;
+    /* 點擊回饋特效 */
+    .feedback {
+      animation: feedback 0.18s;
     }
-    @keyframes sparkle {
-      0% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.7);}
-      60% { opacity: 0.3; transform: translate(-50%, -50%) scale(1.1);}
-      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3);}
+    @keyframes feedback {
+      0% { background: #fff2; }
+      100% { background: none; }
+    }
+    /* 防止雙擊放大與選字 */
+    * {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
   </style>
 </head>
@@ -180,12 +165,6 @@
     }
   }
 
-  // 加入閃爍特效
-  function addSparkleEffect(el) {
-    el.classList.add('sparkle');
-    setTimeout(() => el.classList.remove('sparkle'), 700);
-  }
-
   async function roll() {
     if (isRolling) return;
     isRolling = true;
@@ -195,24 +174,19 @@
     const bottom = bottomOptions[Math.floor(Math.random() * bottomOptions.length)];
 
     // 移除舊 class
-    topText.classList.remove('red', 'blue', 'green', 'orange', 'animate');
-    bottomText.classList.remove('animate');
+    topText.classList.remove('red', 'blue', 'green', 'orange', 'feedback');
+    bottomText.classList.remove('feedback');
 
     // 設定新內容與 class
     topText.textContent = top.text;
-    topText.classList.add(top.class, 'animate');
+    topText.classList.add(top.class, 'feedback');
     bottomText.textContent = bottom.text;
-    bottomText.classList.add('animate');
-
-    // 閃爍特效
-    addSparkleEffect(topText);
-    addSparkleEffect(bottomText);
+    bottomText.classList.add('feedback');
 
     // 先預載音檔，減少銜接延遲
     const colorAudio = getAudio(top.audio);
     const actionAudio = getAudio(bottom.audio);
 
-    // 音效淡入淡出優化
     await playAudioSequence([colorAudio, actionAudio]);
 
     isRolling = false;
@@ -220,15 +194,20 @@
 
   // 點擊與觸控都支援
   const main = document.getElementById('main');
-  main.addEventListener('click', roll);
+  let lastTouch = 0;
   main.addEventListener('touchend', function(e) {
     e.preventDefault();
+    lastTouch = Date.now();
+    roll();
+  });
+  main.addEventListener('click', function(e) {
+    if (Date.now() - lastTouch < 500) return;
     roll();
   });
 
-  // 動畫結束後移除 animate class
-  topText.addEventListener('animationend', () => topText.classList.remove('animate'));
-  bottomText.addEventListener('animationend', () => bottomText.classList.remove('animate'));
+  // 動畫結束後移除 feedback class
+  topText.addEventListener('animationend', () => topText.classList.remove('feedback'));
+  bottomText.addEventListener('animationend', () => bottomText.classList.remove('feedback'));
   </script>
 </body>
 </html>
