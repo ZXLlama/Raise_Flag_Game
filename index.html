@@ -43,7 +43,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 6vw;
+      font-size: 8vw; /* 字體變大 */
       font-weight: bold;
       letter-spacing: 0.12em;
       min-height: 40vh;
@@ -55,6 +55,11 @@
       box-sizing: border-box;
       max-width: 100vw;
       transition: background 0.2s;
+    }
+    @media (max-width: 600px) {
+      .half {
+        font-size: 20vw;
+      }
     }
     .top {
       border-bottom: 2px solid #222;
@@ -91,13 +96,27 @@
       border-radius: 0.3em;
       padding: 0.1em 0.5em;
     }
-    /* 點擊回饋特效 */
-    .feedback {
-      animation: feedback 0.18s;
+    /* 點擊回饋特效：只讓文字動，背景不動 */
+    .feedback span {
+      display: inline-block;
+      animation: feedback-text 0.18s;
     }
-    @keyframes feedback {
-      0% { background: #fff2; }
-      100% { background: none; }
+    @keyframes feedback-text {
+      0% {
+        transform: scale(1.08);
+        filter: brightness(1.3);
+      }
+      60% {
+        transform: scale(0.97);
+        filter: brightness(1.1);
+      }
+      100% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+    }
+    .feedback {
+      /* 不再有動畫，僅作為標記 */
     }
     /* 防止雙擊放大與選字 */
     * {
@@ -109,8 +128,8 @@
 </head>
 <body>
   <div class="container" id="main">
-    <div class="half top" id="topText">沒有旗子的</div>
-    <div class="half bottom" id="bottomText">舉旗遊戲～</div>
+    <div class="half top" id="topText">沒有旗的</div>
+    <div class="half bottom" id="bottomText">舉旗遊戲</div>
   </div>
   <script>
   // 顏色與檔名對應
@@ -154,15 +173,35 @@
   let isRolling = false; // 防止連點
 
   async function playAudioSequence(audios) {
-    for (const audio of audios) {
+    for (let i = 0; i < audios.length; i++) {
       await new Promise((resolve) => {
-        audio.onended = resolve;
-        audio.onerror = resolve;
+        const audio = audios[i];
         audio.currentTime = 0;
         audio.volume = 0.85;
+        let timeoutId = null;
+        audio.onended = () => {
+          if (timeoutId) clearTimeout(timeoutId);
+          resolve();
+        };
+        audio.onerror = () => {
+          if (timeoutId) clearTimeout(timeoutId);
+          resolve();
+        };
         audio.play().catch(resolve);
+        // 提前 50ms 播放下一個音頻
+        if (i < audios.length - 1) {
+          audio.onloadedmetadata = () => {
+            const duration = audio.duration * 1000;
+            timeoutId = setTimeout(resolve, Math.max(0, duration - 50));//提早播放
+          };
+        }
       });
     }
+  }
+
+  // 將文字包進 span 以便只讓文字動
+  function setTextWithSpan(el, text) {
+    el.innerHTML = `<span>${text}</span>`;
   }
 
   async function roll() {
@@ -177,10 +216,10 @@
     topText.classList.remove('red', 'blue', 'green', 'orange', 'feedback');
     bottomText.classList.remove('feedback');
 
-    // 設定新內容與 class
-    topText.textContent = top.text;
+    // 設定新內容與 class（用 span 包裹文字）
+    setTextWithSpan(topText, top.text);
     topText.classList.add(top.class, 'feedback');
-    bottomText.textContent = bottom.text;
+    setTextWithSpan(bottomText, bottom.text);
     bottomText.classList.add('feedback');
 
     // 先預載音檔，減少銜接延遲
