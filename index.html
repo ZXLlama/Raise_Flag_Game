@@ -71,28 +71,29 @@
     .red { 
       color: #ff3b3b; 
       text-shadow: 0 0 32px #ff3b3bcc, 0 0 8px #fff8;
-      background: linear-gradient(180deg, #ff3b3b22 0%, #fff0 100%);
+      /* 移除背景 */
+      /* background: linear-gradient(180deg, #ff3b3b22 0%, #fff0 100%); */
       border-radius: 0.3em;
       padding: 0.1em 0.5em;
     }
     .blue { 
       color: #2196f3; 
       text-shadow: 0 0 32px #2196f3cc, 0 0 8px #fff8;
-      background: linear-gradient(180deg, #2196f322 0%, #fff0 100%);
+      /* background: linear-gradient(180deg, #2196f322 0%, #fff0 100%); */
       border-radius: 0.3em;
       padding: 0.1em 0.5em;
     }
     .green { 
       color: #4caf50; 
       text-shadow: 0 0 32px #4caf50cc, 0 0 8px #fff8;
-      background: linear-gradient(180deg, #4caf5022 0%, #fff0 100%);
+      /* background: linear-gradient(180deg, #4caf5022 0%, #fff0 100%); */
       border-radius: 0.3em;
       padding: 0.1em 0.5em;
     }
     .orange { 
       color: #ff9800; 
       text-shadow: 0 0 32px #ff9800cc, 0 0 8px #fff8;
-      background: linear-gradient(180deg, #ff980022 0%, #fff0 100%);
+      /* background: linear-gradient(180deg, #ff980022 0%, #fff0 100%); */
       border-radius: 0.3em;
       padding: 0.1em 0.5em;
     }
@@ -104,11 +105,11 @@
     @keyframes feedback-text {
       0% {
         transform: scale(1.08);
-        filter: brightness(1.3);
+        filter: brightness(1.3) drop-shadow(0 0 16px #fff) drop-shadow(0 0 8px #ff0);
       }
       60% {
         transform: scale(0.97);
-        filter: brightness(1.1);
+        filter: brightness(1.1) drop-shadow(0 0 8px #fff8);
       }
       100% {
         transform: scale(1);
@@ -127,6 +128,36 @@
   </style>
 </head>
 <body>
+  <!-- 設定按鈕 -->
+  <button id="settingsBtn" style="position:absolute;top:10px;right:16px;z-index:20;font-size:1.5em;padding:0.3em 0.7em;border-radius:0.5em;border:none;background:#222;color:#fff;box-shadow:0 2px 8px #0008;cursor:pointer;">⚙️</button>
+  <!-- 設定面板 -->
+  <div id="settingsTab" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:99;">
+    <div id="settingsMask" style="position:absolute;top:0;left:0;width:100vw;height:100vh;background:#000a;"></div>
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#222;padding:2em 2em 1.5em 2em;border-radius:1em;min-width:260px;box-shadow:0 4px 32px #000c;max-width:90vw;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:1.3em;font-weight:bold;">設定</span>
+        <button id="closeSettingsBtn" style="font-size:1.3em;background:none;border:none;color:#fff;cursor:pointer;">✖</button>
+      </div>
+      <hr style="border:0;border-top:1px solid #444;margin:1em 0;">
+      <div style="margin-bottom:1.2em;">
+        <label style="font-size:1.1em;user-select:none;cursor:pointer;">
+          <input type="checkbox" id="doubleColorSwitch" style="transform:scale(1.3);vertical-align:middle;margin-right:0.5em;">
+          允許雙色
+        </label>
+      </div>
+      <div style="margin-bottom:0.5em;">
+        <label for="doubleColorChance" style="font-size:1.1em;">雙色機率：</label>
+        <input type="range" id="doubleColorChance" min="0" max="100" value="25" style="vertical-align:middle;width:120px;">
+        <span id="doubleColorChanceValue" style="font-size:1.1em;margin-left:0.5em;">25%</span>
+      </div>
+      <div style="margin-bottom:0.5em;">
+        <label style="font-size:1.1em;user-select:none;cursor:pointer;">
+          <input type="checkbox" id="simpleModeSwitch" style="transform:scale(1.3);vertical-align:middle;margin-right:0.5em;">
+          簡化模式（僅舉起來/放下來）
+        </label>
+      </div>
+    </div>
+  </div>
   <div class="container" id="main">
     <div class="half top" id="topText">沒有旗的</div>
     <div class="half bottom" id="bottomText">舉旗遊戲</div>
@@ -149,6 +180,8 @@
 
   const topText = document.getElementById('topText');
   const bottomText = document.getElementById('bottomText');
+  const doubleColorSwitch = document.getElementById('doubleColorSwitch');
+  const simpleModeSwitch = document.getElementById('simpleModeSwitch');
 
   // 預先建立 audio 元件，減少延遲
   const audioCache = {};
@@ -188,45 +221,101 @@
           resolve();
         };
         audio.play().catch(resolve);
-        // 提前 50ms 播放下一個音頻
+        // 只對最後一個顏色與動作間用 50ms，其餘顏色間無重疊
         if (i < audios.length - 1) {
           audio.onloadedmetadata = () => {
             const duration = audio.duration * 1000;
-            timeoutId = setTimeout(resolve, Math.max(0, duration - 50));//提早播放
+            let gap;
+            if (audios.length === 3 && i === 1) {
+              // 最後一個顏色與動作間
+              gap = 50;
+            } else {
+              // 顏色與顏色間
+              gap = 0;
+            }
+            timeoutId = setTimeout(resolve, Math.max(0, duration - gap));
           };
         }
       });
     }
   }
 
-  // 將文字包進 span 以便只讓文字動
-  function setTextWithSpan(el, text) {
-    el.innerHTML = `<span>${text}</span>`;
+  // 將文字包進 span，支援雙色，雙色時第二個顏色換行
+  function setTextWithSpan(el, text, classes) {
+    if (Array.isArray(text)) {
+      // 雙色：text=[text1, text2], classes=[class1, class2]，分上下兩行
+      el.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;">
+        <span class="${classes[0]}">${text[0]}</span>
+        <span class="${classes[1]}">${text[1]}</span>
+      </div>`;
+    } else {
+      // 單色
+      el.innerHTML = `<span class="${classes}">${text}</span>`;
+    }
   }
 
   async function roll() {
     if (isRolling) return;
     isRolling = true;
 
-    // 隨機選擇
-    const top = topOptions[Math.floor(Math.random() * topOptions.length)];
-    const bottom = bottomOptions[Math.floor(Math.random() * bottomOptions.length)];
+    let top, top2 = null, isDouble = false;
+    // 雙色機率判斷
+    if (doubleColorSwitch.checked && Math.random() < doubleColorProbability) {
+      // 取兩個不同顏色
+      const idx1 = Math.floor(Math.random() * topOptions.length);
+      let idx2;
+      do {
+        idx2 = Math.floor(Math.random() * topOptions.length);
+      } while (idx2 === idx1);
+      top = topOptions[idx1];
+      top2 = topOptions[idx2];
+      isDouble = true;
+    } else {
+      top = topOptions[Math.floor(Math.random() * topOptions.length)];
+    }
+
+    // 動作選項依簡化模式切換
+    let actionOptions;
+    if (simpleModeSwitch.checked) {
+      actionOptions = [
+        { text: '舉起來', audio: '舉起來.mp3' },
+        { text: '放下來', audio: '放下來.mp3' }
+      ];
+    } else {
+      actionOptions = bottomOptions;
+    }
+    const bottom = actionOptions[Math.floor(Math.random() * actionOptions.length)];
 
     // 移除舊 class
     topText.classList.remove('red', 'blue', 'green', 'orange', 'feedback');
     bottomText.classList.remove('feedback');
 
-    // 設定新內容與 class（用 span 包裹文字）
-    setTextWithSpan(topText, top.text);
-    topText.classList.add(top.class, 'feedback');
-    setTextWithSpan(bottomText, bottom.text);
+    // 設定新內容與 class（用 span 包裹文字，雙色分開 class）
+    if (isDouble) {
+      setTextWithSpan(topText, [top.text, top2.text], [top.class, top2.class]);
+      // 先移除舊的動畫特效
+      const spans = topText.querySelectorAll('span');
+      spans.forEach(span => span.style.filter = '');
+      topText.classList.add('feedback');
+    } else {
+      setTextWithSpan(topText, top.text, top.class);
+      // 先移除舊的動畫特效
+      const spans = topText.querySelectorAll('span');
+      spans.forEach(span => span.style.filter = '');
+      topText.classList.add('feedback');
+    }
+    setTextWithSpan(bottomText, bottom.text, '');
     bottomText.classList.add('feedback');
 
     // 先預載音檔，減少銜接延遲
-    const colorAudio = getAudio(top.audio);
-    const actionAudio = getAudio(bottom.audio);
+    let audios = [];
+    if (isDouble) {
+      audios = [getAudio(top.audio), getAudio(top2.audio), getAudio(bottom.audio)];
+    } else {
+      audios = [getAudio(top.audio), getAudio(bottom.audio)];
+    }
 
-    await playAudioSequence([colorAudio, actionAudio]);
+    await playAudioSequence(audios);
 
     isRolling = false;
   }
@@ -247,6 +336,30 @@
   // 動畫結束後移除 feedback class
   topText.addEventListener('animationend', () => topText.classList.remove('feedback'));
   bottomText.addEventListener('animationend', () => bottomText.classList.remove('feedback'));
+
+  // 設定面板邏輯
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsTab = document.getElementById('settingsTab');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const settingsMask = document.getElementById('settingsMask');
+  const doubleColorChance = document.getElementById('doubleColorChance');
+  const doubleColorChanceValue = document.getElementById('doubleColorChanceValue');
+
+  // 開啟設定
+  settingsBtn.onclick = () => { settingsTab.style.display = 'block'; };
+  // 關閉設定
+  closeSettingsBtn.onclick = settingsMask.onclick = () => { settingsTab.style.display = 'none'; };
+
+  // 雙色機率滑桿顯示
+  doubleColorChance.oninput = function() {
+    doubleColorChanceValue.textContent = this.value + '%';
+  };
+
+  // 將預設雙色機率設為滑桿值
+  let doubleColorProbability = Number(doubleColorChance.value) / 100;
+  doubleColorChance.addEventListener('input', function() {
+    doubleColorProbability = Number(this.value) / 100;
+  });
   </script>
 </body>
 </html>
